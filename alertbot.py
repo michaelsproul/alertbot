@@ -6,6 +6,7 @@ import requests
 import traceback
 import configparser
 
+HTTP_TIMEOUT_SECONDS = 10.0
 CONFIG_FILE = "config.ini"
 
 def load_config():
@@ -18,7 +19,10 @@ def get_bot(config):
 
 def check_lighthouse_health(config, errors):
     errors = []
-    lh_health = requests.get(f"{config['lighthouse']['endpoint']}/lighthouse/health")
+    lh_health = requests.get(
+        f"{config['lighthouse']['endpoint']}/lighthouse/health",
+        timeout=HTTP_TIMEOUT_SECONDS
+    )
     if lh_health.ok:
         health_json = lh_health.json()["data"]
         mem_percent = health_json["sys_virt_mem_percent"]
@@ -29,12 +33,18 @@ def check_lighthouse_health(config, errors):
         errors.append(f"Error from /lighthouse/health: {lh_health.status_code}")
 
 def check_sync_status(config, errors):
-    node_health = requests.get(f"{config['lighthouse']['endpoint']}/eth/v1/node/health")
+    node_health = requests.get(
+        f"{config['lighthouse']['endpoint']}/eth/v1/node/health",
+        timeout=HTTP_TIMEOUT_SECONDS
+    )
     if node_health.status_code != 200:
         errors.append(f"Lighthouse not synced: {node_health.status_code}")
 
 def check_peer_count(config, errors):
-    peer_count = requests.get(f"{config['lighthouse']['endpoint']}/eth/v1/node/peer_count")
+    peer_count = requests.get(
+        f"{config['lighthouse']['endpoint']}/eth/v1/node/peer_count",
+        timeout=HTTP_TIMEOUT_SECONDS
+    )
 
     if peer_count.ok:
         peer_count = int(peer_count.json()["data"]["connected"])
