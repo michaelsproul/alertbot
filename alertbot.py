@@ -37,7 +37,7 @@ def check_sync_status(config, errors):
         f"{config['lighthouse']['endpoint']}/eth/v1/node/health",
         timeout=HTTP_TIMEOUT_SECONDS
     )
-    if node_health.status_code != 200 and node_health.status != 206:
+    if node_health.status_code != 200 and node_health.status_code != 206:
         errors.append(f"Lighthouse not synced: {node_health.status_code}")
 
 def check_peer_count(config, errors):
