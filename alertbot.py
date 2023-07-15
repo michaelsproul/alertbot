@@ -33,12 +33,25 @@ def check_lighthouse_health(config, errors):
         errors.append(f"Error from /lighthouse/health: {lh_health.status_code}")
 
 def check_sync_status(config, errors):
-    node_health = requests.get(
-        f"{config['lighthouse']['endpoint']}/eth/v1/node/health",
+    node_status = requests.get(
+        f"{config['lighthouse']['endpoint']}/eth/v1/node/syncing",
         timeout=HTTP_TIMEOUT_SECONDS
     )
-    if node_health.status_code != 200 and node_health.status_code != 206:
-        errors.append(f"Lighthouse not synced: {node_health.status_code}")
+    if node_status.status_code != 200:
+        errors.append(f"Lighthouse not synced: {node_status.status_code}")
+    else:
+        status = node_status.json()["data"]
+        sync_tolerance = config["lighthouse"]["sync_tolerance"]
+        sync_distance = status["sync_distance"]
+        is_syncing = status["is_syncing"]
+        is_optimistic = status["is_optimistic"]
+        el_offline = status["el_offline"]
+        if is_syncing or sync_distance > sync_tolerance:
+            errors.append(f"Lighthouse syncing: {sync_distance} slots from head")
+        elif is_optimistic:
+            errors.append(f"Lighthouse synced optimistically")
+        elif el_offline:
+            errors.append(f"Execution node is offline or erroring")
 
 def check_peer_count(config, errors):
     peer_count = requests.get(
