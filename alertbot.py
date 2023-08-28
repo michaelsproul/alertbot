@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import asyncio
 import telegram
 import requests
 import traceback
@@ -74,7 +75,7 @@ def check_for_errors(config, errors):
     check_sync_status(config, errors)
     check_peer_count(config, errors)
 
-def main():
+async def main():
     config = load_config()
 
     if config["telegram"]["api_token"].startswith('"'):
@@ -90,21 +91,21 @@ def main():
             errors.append(f"Heartbeat error: {e}")
 
         if len(errors) > 0:
-            print("BAD")
+            print("BAD", flush=True)
             message = "Trouble in paradise:\n\n"
             for error in errors:
                 message += f"- {error}\n"
             bot = get_bot(config)
-            bot.send_message(config["telegram"]["chat_id"], message)
+            await bot.send_message(config["telegram"]["chat_id"], message)
         else:
-            print("OK")
+            print("OK", flush=True)
 
         time.sleep(int(config["alertbot"]["poll_interval_seconds"]))
 
 if __name__ == "__main__":
     while True:
         try:
-            main()
+            asyncio.run(main())
         except Exception as e:
             print(e)
             traceback.print_exc()
